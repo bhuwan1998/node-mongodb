@@ -5,34 +5,46 @@ const dboper = require('./operations');
 const url = 'mongodb://localhost:27017/';
 const dbname = "conFusion"; 
 
-MongoClient.connect(url,(err, client) => {
+MongoClient.connect(url).then((client) => {
+
     assert.strictEqual(err, null); // check if there is an error 
 
     console.log('Connected correctly to the server'); 
 
     const db = client.db(dbname);
     
-    dboper.insertDocument(db, {name: "Vadonut", description: "Test"}, "dishes", (result) => {
+    dboper.insertDocument(db, {name: "Vadonut", description: "Test"}, "dishes")
+    .then((result) => {
         // insertDocument(db , document, collection , callback)
         console.log('Insert Document:\n', result.ops); 
         // .ops for operations
-        dboper.findDocuments(db, "dishes", (docs) => {
+        return dboper.findDocuments(db, "dishes")
+    })
+    .then((docs) => {
             console.log("Found Documents:\n", docs); 
 
-            dboper.updateDocument(db, {name: "Vadonut"}, {description: "Updated test"}, "dishes", (result)=>{
-               console.log("Updated Document:\n", result.result); 
+            return dboper.updateDocument(db, {name: "Vadonut"}, {description: "Updated test"}, "dishes")
+    })
+    .then((result)=>{
+        
+        console.log("Updated Document:\n", result.result); 
 
-               dboper.findDocuments(db, "dishes", (docs) => {
-                console.log("Found Updated Documents:\n", docs);
+        return dboper.findDocuments(db, "dishes")
+    })    
+    .then((docs) => {
+                
+        console.log("Found Updated Documents:\n", docs);
 
-                db.dropCollection("dishes", (result) => {
-                    console.log('Dropped Collection: ', result);
-                    client.close();
-                });
+        db.dropCollection("dishes")
+    })
+    .then((result) => {
+        
+        console.log('Dropped Collection: ', result);
+        client.close();
+    })
+    .catch((err) => console.log(err));
 
-               });
-            });
-        })
+})
+.catch((err) => console.log(err));
 
-    });
-});
+// each then is returning the promise 
